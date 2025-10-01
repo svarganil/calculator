@@ -5,16 +5,19 @@
     <meta charset="UTF-8">
     <title>Ingredient Calculator</title>
     <link rel="stylesheet" href="./style.css">
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;600;700&display=swap" rel="stylesheet">
   </head>
     
   <body>
   <div class="container">
 	<div class="tool">
-		<h2>Калькулятор ингредиентов</h2>
+		<h2>Калькулятор загрузки меланжера KADZAMA</h2>
 		<div class="total-input">
-			<label for="totalKg">Общий вес, кг</label>
-			<input id="totalKg" type="number" min="0" step="0.001" placeholder="Например, 25" />
+			<label for="totalKg">Общий вес загрузки (кг)</label>
+			<input id="totalKg" type="number" min="0" step="0.001" placeholder="Например, 35" />
+			<button id="downloadCsv" type="button" style="margin-left:10px;">Скачать таблицу</button>
 		</div>
 
 		<table id="ingredientsTable">
@@ -22,9 +25,9 @@
 				<tr>
 					<th>Ингредиент</th>
 					<th>% от 100</th>
-					<th>Кг</th>
-					<th>Цена за кг</th>
-					<th>Стоимость</th>
+					<th>Вес (кг)</th>
+					<th>Цена (₽/кг)</th>
+					<th>Стоимость (₽)</th>
 					<th></th>
 				</tr>
 			</thead>
@@ -63,14 +66,15 @@
 			</tfoot>
 		</table>
 
-		<p id="hint" style="margin-top:10px;">Подсказка: сумма процентов должна быть 100%.</p>
+		<p id="hint" style="margin-top:10px; color:#ffffff;">Подсказка: сумма процентов должна быть 100%.</p>
 	</div>
 
-	<script>
+		<script>
 	(function() {
 		const totalInput = document.getElementById('totalKg');
 		const body = document.getElementById('ingredientsBody');
 		const addBtn = document.getElementById('addRow');
+			const downloadBtn = document.getElementById('downloadCsv');
 		const sumPctCell = document.getElementById('sumPct');
 		const sumKgCell = document.getElementById('sumKg');
 		const sumCostCell = document.getElementById('sumCost');
@@ -85,7 +89,7 @@
 			return Number(value).toFixed(2);
 		}
 
-		function recalc() {
+				function recalc() {
 			const total = parseFloat(totalInput.value) || 0;
 			let sumPct = 0;
 			let sumKg = 0;
@@ -108,10 +112,10 @@
 				kgCell.textContent = formatKg(kg);
 				costCell.textContent = formatCost(cost);
 			});
-			sumPctCell.textContent = formatKg(sumPct) + '%';
-			sumKgCell.textContent = formatKg(sumKg);
-			sumCostCell.textContent = formatCost(sumCost);
-			sumPctCell.style.color = Math.abs(sumPct - 100) < 0.001 ? '#c8f7c5' : '#ffd166';
+					sumPctCell.textContent = formatKg(sumPct) + '%';
+					sumKgCell.textContent = formatKg(sumKg);
+					sumCostCell.textContent = formatCost(sumCost);
+					sumPctCell.style.color = '';
 		}
 
 		function addRow() {
@@ -121,7 +125,7 @@
 			recalc();
 		}
 
-		function onBodyClick(e) {
+			function onBodyClick(e) {
 			if (e.target && e.target.classList.contains('remove')) {
 				const row = e.target.closest('tr');
 				if (row && body.children.length > 1) {
@@ -130,6 +134,46 @@
 				}
 			}
 		}
+
+			function toCsv() {
+				const header = ['Ингредиент','% от 100','Кг','Цена (₽/кг)','Стоимость (₽)'];
+				const rows = [header];
+				Array.from(body.querySelectorAll('tr')).forEach(row => {
+					const name = row.querySelector('td:nth-child(1) input')?.value || '';
+					const pct = row.querySelector('td:nth-child(2) input')?.value || '0';
+					const kg = row.querySelector('td:nth-child(3)').textContent || '0';
+					const price = row.querySelector('td:nth-child(4) input')?.value || '0';
+					const cost = row.querySelector('td:nth-child(5)').textContent || '0';
+					rows.push([name, pct, kg, price, cost]);
+				});
+				rows.push(['ИТОГО', sumPctCell.textContent, sumKgCell.textContent, '', sumCostCell.textContent]);
+				return rows.map(r => r.map(cell => {
+					const c = String(cell ?? '');
+					if (c.includes('"') || c.includes(',') || c.includes('\n')) {
+						return '"' + c.replace(/"/g, '""') + '"';
+					}
+					return c;
+				}).join(',')).join('\n');
+			}
+
+			function downloadCsv() {
+				const csv = toCsv();
+				const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				const d = new Date();
+				const yyyy = d.getFullYear();
+				const mm = String(d.getMonth() + 1).padStart(2, '0');
+				const dd = String(d.getDate()).padStart(2, '0');
+				const filename = `расчет_загрузки_${yyyy}-${mm}-${dd}.csv`;
+				a.download = filename;
+				a.style.display = 'none';
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			}
 
 		function onBodyInput(e) {
 			if (e.target && (e.target.matches('#totalKg') || e.target.classList.contains('pct') || e.target.classList.contains('price'))) {
@@ -140,6 +184,7 @@
 		addBtn.addEventListener('click', addRow);
 		body.addEventListener('click', onBodyClick);
 		body.addEventListener('input', onBodyInput);
+		downloadBtn.addEventListener('click', downloadCsv);
 		totalInput.addEventListener('input', recalc);
 		recalc();
 	})();

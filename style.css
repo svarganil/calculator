@@ -4,8 +4,8 @@ body {
 }
 body {
   margin: 0;
-  background: linear-gradient(45deg, #49a09d, #5f2c82);
-  font-family: sans-serif;
+  background: #232323;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 100;
 }
 .container {
@@ -18,7 +18,8 @@ table {
   width: 800px;
   border-collapse: collapse;
   overflow: hidden;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
 }
 th,
 td {
@@ -29,8 +30,13 @@ td {
 th {
   text-align: left;
 }
+h2,
+label {
+  color: #ffffff;
+}
 thead th {
-  background-color: #55608f;
+  background-color: #E9281B;
+  color: #ffffff;
 }
 tbody tr:hover {
   background-color: rgba(255, 255, 255, 0.3);
