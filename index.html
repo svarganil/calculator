@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Ingredient Calculator</title>
+    <link rel="stylesheet" href="./style.css">
+
+  </head>
+    
+  <body>
+  <div class="container">
+	<div class="tool">
+		<h2>Калькулятор ингредиентов</h2>
+		<div class="total-input">
+			<label for="totalKg">Общий вес, кг</label>
+			<input id="totalKg" type="number" min="0" step="0.001" placeholder="Например, 25" />
+		</div>
+
+		<table id="ingredientsTable">
+			<thead>
+				<tr>
+					<th>Ингредиент</th>
+					<th>% от 100</th>
+					<th>Кг</th>
+					<th>Цена за кг</th>
+					<th>Стоимость</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody id="ingredientsBody">
+				<tr>
+					<td><input type="text" placeholder="Название" /></td>
+					<td><input type="number" class="pct" min="0" max="100" step="0.01" placeholder="0" /></td>
+					<td class="kg">0</td>
+					<td><input type="number" class="price" min="0" step="0.01" placeholder="0" /></td>
+					<td class="cost">0</td>
+					<td><button class="remove" type="button">−</button></td>
+				</tr>
+				<tr>
+					<td><input type="text" placeholder="Название" /></td>
+					<td><input type="number" class="pct" min="0" max="100" step="0.01" placeholder="0" /></td>
+					<td class="kg">0</td>
+					<td><input type="number" class="price" min="0" step="0.01" placeholder="0" /></td>
+					<td class="cost">0</td>
+					<td><button class="remove" type="button">−</button></td>
+				</tr>
+			</tbody>
+			<tfoot>
+				<tr>
+					<td colspan="6">
+						<button id="addRow" type="button">Добавить ингредиент</button>
+					</td>
+				</tr>
+				<tr>
+					<td><strong>ИТОГО</strong></td>
+					<td id="sumPct">0%</td>
+					<td id="sumKg">0</td>
+					<td></td>
+					<td id="sumCost">0</td>
+					<td></td>
+				</tr>
+			</tfoot>
+		</table>
+
+		<p id="hint" style="margin-top:10px;">Подсказка: сумма процентов должна быть 100%.</p>
+	</div>
+
+	<script>
+	(function() {
+		const totalInput = document.getElementById('totalKg');
+		const body = document.getElementById('ingredientsBody');
+		const addBtn = document.getElementById('addRow');
+		const sumPctCell = document.getElementById('sumPct');
+		const sumKgCell = document.getElementById('sumKg');
+		const sumCostCell = document.getElementById('sumCost');
+
+		function formatKg(value) {
+			if (!isFinite(value)) return '0';
+			return Number(value).toFixed(3).replace(/\.000$/, '');
+		}
+
+		function formatCost(value) {
+			if (!isFinite(value)) return '0';
+			return Number(value).toFixed(2);
+		}
+
+		function recalc() {
+			const total = parseFloat(totalInput.value) || 0;
+			let sumPct = 0;
+			let sumKg = 0;
+			let sumCost = 0;
+			Array.from(body.querySelectorAll('tr')).forEach(row => {
+				const pctInput = row.querySelector('input.pct');
+				const priceInput = row.querySelector('input.price');
+				const kgCell = row.querySelector('.kg');
+				const costCell = row.querySelector('.cost');
+				
+				const pct = Math.max(0, Math.min(100, parseFloat(pctInput.value)) || 0);
+				const price = Math.max(0, parseFloat(priceInput.value) || 0);
+				const kg = total * pct / 100;
+				const cost = kg * price;
+				
+				sumPct += pct;
+				sumKg += kg;
+				sumCost += cost;
+				
+				kgCell.textContent = formatKg(kg);
+				costCell.textContent = formatCost(cost);
+			});
+			sumPctCell.textContent = formatKg(sumPct) + '%';
+			sumKgCell.textContent = formatKg(sumKg);
+			sumCostCell.textContent = formatCost(sumCost);
+			sumPctCell.style.color = Math.abs(sumPct - 100) < 0.001 ? '#c8f7c5' : '#ffd166';
+		}
+
+		function addRow() {
+			const tr = document.createElement('tr');
+			tr.innerHTML = '\n\t\t\t\t\t<td><input type="text" placeholder="Название" /></td>\n\t\t\t\t\t<td><input type="number" class="pct" min="0" max="100" step="0.01" placeholder="0" /></td>\n\t\t\t\t\t<td class="kg">0</td>\n\t\t\t\t\t<td><input type="number" class="price" min="0" step="0.01" placeholder="0" /></td>\n\t\t\t\t\t<td class="cost">0</td>\n\t\t\t\t\t<td><button class="remove" type="button">−</button></td>\n\t\t\t\t';
+			body.appendChild(tr);
+			recalc();
+		}
+
+		function onBodyClick(e) {
+			if (e.target && e.target.classList.contains('remove')) {
+				const row = e.target.closest('tr');
+				if (row && body.children.length > 1) {
+					row.remove();
+					recalc();
+				}
+			}
+		}
+
+		function onBodyInput(e) {
+			if (e.target && (e.target.matches('#totalKg') || e.target.classList.contains('pct') || e.target.classList.contains('price'))) {
+				recalc();
+			}
+		}
+
+		addBtn.addEventListener('click', addRow);
+		body.addEventListener('click', onBodyClick);
+		body.addEventListener('input', onBodyInput);
+		totalInput.addEventListener('input', recalc);
+		recalc();
+	})();
+	</script>
+  </div>
+    
+  </body>
+  
+</html>
